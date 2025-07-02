@@ -32,6 +32,7 @@ export interface Tugas {
   lampiran_url?: string;
   created_at: string;
   updated_at: string;
+  jenis: string;
 }
 
 // Helper function untuk mendapatkan headers dengan token
@@ -50,17 +51,11 @@ const getHeaders = () => {
 export const getKonsultanList = async (): Promise<Konsultan[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/tugas/konsultan-list`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'user-id': localStorage.getItem('userId') || '',
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders()
     });
-
     if (!response.ok) {
       throw new Error('Gagal mengambil data konsultan');
     }
-
     return await response.json();
   } catch (error) {
     console.error('Error fetching konsultan list:', error);
@@ -243,6 +238,25 @@ export const addTugasKomentar = async (tugasId: string, komentar: string): Promi
     return result.komentar;
   } catch (error) {
     console.error('Error adding komentar:', error);
+    throw error;
+  }
+};
+
+// Get tugas untuk konsultan
+export const getTugasByKonsultan = async (): Promise<Tugas[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tugas/konsultan`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error('Gagal mengambil daftar tugas konsultan');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching tugas konsultan:', error);
     throw error;
   }
 }; 

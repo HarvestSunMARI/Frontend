@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -51,7 +51,7 @@ const sidebarItems: SidebarItem[] = [
   
   // Admin
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/admin', roles: ['admin'] },
-  { id: 'manajemen-pengguna', label: 'Manajemen Pengguna', icon: Users, href: '/manajemen-pengguna', roles: ['admin'] },
+  { id: 'manajemen-pengguna', label: 'Manajemen Pengguna', icon: Users, href: '/admin/users', roles: ['admin'] },
   { id: 'roles-permissions', label: 'Roles & Permissions', icon: Shield, href: '/roles-permissions', roles: ['admin'] },
   { id: 'log-aktivitas', label: 'Log Aktivitas Sistem', icon: Activity, href: '/log-aktivitas', roles: ['admin'] },
   { id: 'data-overview', label: 'Data Overview', icon: Database, href: '/data-overview', roles: ['admin'] },

@@ -23,6 +23,7 @@ import {
   Tugas,
   TugasData
 } from '@/services/tugasService';
+import { createClient } from '@supabase/supabase-js';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -37,6 +38,17 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+const jenisTugasOptions = [
+  { value: 'panen', label: 'Panen' },
+  { value: 'inspeksi', label: 'Inspeksi' },
+  { value: 'pelatihan', label: 'Pelatihan' },
+  { value: 'meeting', label: 'Meeting' },
+  { value: 'lainnya', label: 'Lainnya' },
+];
+
 export default function TugasPage() {
   const { toast } = useToast();
   const [tugas, setTugas] = useState<Tugas[]>([]);
@@ -49,6 +61,7 @@ export default function TugasPage() {
   const [formData, setFormData] = useState({
     judul: "",
     deskripsi: "",
+    jenis: "",
     konsultanId: "",
     tanggalMulai: "",
     deadline: "",
@@ -81,10 +94,10 @@ export default function TugasPage() {
   };
 
   const handleTambahTugas = async () => {
-    if (!formData.judul || !formData.konsultanId || !formData.deadline) {
+    if (!formData.judul || !formData.konsultanId || !formData.deadline || !formData.jenis) {
       toast({
         title: "Error",
-        description: "Judul, konsultan, dan deadline harus diisi",
+        description: "Judul, jenis tugas, konsultan, dan deadline harus diisi",
         variant: "destructive"
       });
       return;
@@ -92,39 +105,39 @@ export default function TugasPage() {
 
     setSubmitting(true);
     try {
+      let lampiranUrl: string | undefined = undefined;
+      if (formData.lampiran && supabase) {
+        const file = formData.lampiran;
+        const filePath = `tugas/${Date.now()}-${file.name}`;
+        const { data, error } = await supabase.storage.from('lampiran').upload(filePath, file, { upsert: true });
+        if (error) throw error;
+        const { data: publicUrlData } = supabase.storage.from('lampiran').getPublicUrl(filePath);
+        lampiranUrl = publicUrlData.publicUrl;
+      }
       const tugasData: TugasData = {
         judul: formData.judul,
         deskripsi: formData.deskripsi,
+        jenis: formData.jenis,
         konsultan_id: formData.konsultanId,
         tanggal_mulai: formData.tanggalMulai || undefined,
         deadline: formData.deadline,
-        lampiran_url: formData.lampiran ? URL.createObjectURL(formData.lampiran) : undefined
+        lampiran_url: lampiranUrl
       };
-
       const newTugas = await createTugas(tugasData);
       setTugas([newTugas, ...tugas]);
-      
-      // Reset form
       setFormData({
         judul: "",
         deskripsi: "",
+        jenis: "",
         konsultanId: "",
         tanggalMulai: "",
         deadline: "",
         lampiran: null
       });
       setIsModalTambahOpen(false);
-
-      toast({
-        title: "Sukses",
-        description: "Tugas berhasil dibuat",
-      });
+      toast({ title: "Sukses", description: "Tugas berhasil dibuat" });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Gagal membuat tugas",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: error.message || "Gagal membuat tugas", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -211,15 +224,34 @@ export default function TugasPage() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="jenis">Jenis Tugas *</Label>
+                  <Select
+                    value={formData.jenis}
+                    onValueChange={val => setFormData({ ...formData, jenis: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih jenis tugas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jenisTugasOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="konsultan">Pilih Konsultan *</Label>
-                  <Select value={formData.konsultanId} onValueChange={(value) => setFormData({...formData, konsultanId: value})}>
+                  <Select
+                    value={formData.konsultanId}
+                    onValueChange={val => setFormData({ ...formData, konsultanId: val })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih konsultan" />
                     </SelectTrigger>
                     <SelectContent>
-                      {konsultanList.map((konsultan) => (
-                        <SelectItem key={konsultan.id} value={konsultan.id}>
-                          {konsultan.name} {konsultan.wilayah && `- ${konsultan.wilayah}`}
+                      {konsultanList.map(k => (
+                        <SelectItem key={k.id} value={k.id}>
+                          {k.name} {k.wilayah ? `- ${k.wilayah}` : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -250,7 +282,8 @@ export default function TugasPage() {
                   <Input
                     id="lampiran"
                     type="file"
-                    onChange={(e) => setFormData({...formData, lampiran: e.target.files?.[0] || null})}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={e => setFormData({ ...formData, lampiran: e.target.files?.[0] || null })}
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-4">

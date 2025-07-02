@@ -1,131 +1,320 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Plus, Clock, MapPin, Users } from 'lucide-react';
-import { agendaItems } from '@/data/sampleData';
+import { Calendar, Plus, Clock, MapPin, Users, BookOpen, CheckCircle, Briefcase } from 'lucide-react';
+import { getTugasByKonsultan, Tugas } from '@/services/tugasService';
+import { Calendar as CalendarUI } from '@/components/ui/calendar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Calendar as BigCalendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { parseISO } from 'date-fns';
+
+const localizer = momentLocalizer(require('moment'));
+
+// Custom event component
+function CustomEvent({ event }: { event: any }) {
+  let icon = <Briefcase className="h-4 w-4 mr-1 text-white" />;
+  if (event.resource.jenis === 'panen' || event.resource.jenis === 'harvest') icon = <BookOpen className="h-4 w-4 mr-1 text-white" />;
+  if (event.resource.jenis === 'inspeksi' || event.resource.jenis === 'inspection') icon = <CheckCircle className="h-4 w-4 mr-1 text-white" />;
+  if (event.resource.jenis === 'pelatihan' || event.resource.jenis === 'training') icon = <Users className="h-4 w-4 mr-1 text-white" />;
+  if (event.resource.jenis === 'rapat' || event.resource.jenis === 'meeting') icon = <Calendar className="h-4 w-4 mr-1 text-white" />;
+  return (
+    <div className="flex items-center rounded-lg px-2 py-1 gap-1 shadow-sm hover:shadow-md transition bg-opacity-90 cursor-pointer">
+      {icon}
+      <span className="truncate font-medium text-white text-sm">{event.title}</span>
+    </div>
+  );
+}
 
 export default function AgendaPage() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+  const [tugas, setTugas] = useState<Tugas[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Tugas | null>(null);
+  const [calendarDate, setCalendarDate] = useState(new Date());
+
+  useEffect(() => {
+    const fetchTugas = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getTugasByKonsultan();
+        setTugas(data);
+      } catch (err: any) {
+        setError(err.message || 'Gagal memuat tugas');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTugas();
+  }, []);
 
   const getAgendaForDate = (date: Date) => {
-    return agendaItems.filter(item => {
-      const itemDate = new Date(item.date);
+    return tugas.filter(item => {
+      const itemDate = item.tanggal_mulai ? new Date(item.tanggal_mulai) : new Date(item.deadline);
       return itemDate.toDateString() === date.toDateString();
     });
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'meeting': return 'bg-blue-100 text-blue-800';
-      case 'inspection': return 'bg-green-100 text-green-800';
-      case 'harvest': return 'bg-yellow-100 text-yellow-800';
-      case 'training': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'meeting':
+      case 'rapat':
+        return 'bg-blue-100 text-blue-800';
+      case 'inspection':
+      case 'inspeksi':
+        return 'bg-green-100 text-green-800';
+      case 'harvest':
+      case 'panen':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'training':
+      case 'pelatihan':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Untuk dropdown bulan & tahun
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  const years = useMemo(() => {
+    const now = new Date();
+    const arr = [];
+    for (let y = now.getFullYear() - 3; y <= now.getFullYear() + 3; y++) arr.push(y);
+    return arr;
+  }, []);
+
+  // Mapping tugas ke event kalender
+  const events: CalendarEvent[] = tugas.map((item) => ({
+    id: item.id,
+    title: item.judul,
+    start: item.tanggal_mulai ? parseISO(item.tanggal_mulai) : parseISO(item.deadline),
+    end: item.deadline ? parseISO(item.deadline) : (item.tanggal_mulai ? parseISO(item.tanggal_mulai) : new Date()),
+    allDay: true,
+    resource: item,
+  }));
+
+  // Custom style for calendar
+  const customCalendarStyle = {
+    backgroundColor: '#f9fafb',
+    borderRadius: '1rem',
+    boxShadow: '0 2px 12px 0 rgba(34, 197, 94, 0.08)',
+    padding: '1rem',
+    border: 'none',
   };
 
   return (
     <DashboardLayout>
-      <div className="p-6">
+      <div className="p-4 md:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-earth-brown-800">Agenda</h1>
-            <p className="text-earth-brown-600 mt-1">Kelola jadwal dan kegiatan harian</p>
+            <h1 className="text-3xl font-bold text-earth-brown-800">Tugas</h1>
+            <p className="text-earth-brown-600 mt-1">Daftar tugas yang diberikan oleh penyuluh</p>
           </div>
-          <Button className="bg-earth-green-600 hover:bg-earth-green-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Tambah Agenda
-          </Button>
+          {/* Tombol tambah agenda bisa disembunyikan untuk konsultan */}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Calendar View */}
-          <Card className="lg:col-span-2 harvest-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-earth-brown-800 flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-earth-green-600" />
-                  Kalender Agenda
-                </CardTitle>
-                <div className="flex gap-2">
-                  {['day', 'week', 'month'].map((mode) => (
-                    <Button
-                      key={mode}
-                      variant={viewMode === mode ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setViewMode(mode as 'day' | 'week' | 'month')}
-                      className={viewMode === mode ? 'bg-earth-green-600 hover:bg-earth-green-700' : ''}
-                    >
-                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                    </Button>
-                  ))}
+        {loading ? (
+          <div>Memuat tugas...</div>
+        ) : error ? (
+          <div className="text-red-600">{error}</div>
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div style={customCalendarStyle} className="flex-1 overflow-x-auto">
+              <BigCalendar
+                localizer={localizer}
+                events={events}
+                startAccessor="start"
+                endAccessor="end"
+                date={calendarDate}
+                onNavigate={date => setCalendarDate(date)}
+                style={{ height: 600, minWidth: 320 }}
+                onSelectEvent={(event) => {
+                  setSelectedEvent(event.resource);
+                  setOpenDialog(true);
+                }}
+                components={{
+                  event: CustomEvent,
+                  toolbar: (props: any) => (
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 px-2 gap-2">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => props.onNavigate('PREV')} className="rounded bg-earth-green-600 hover:bg-earth-green-700 text-white px-3 py-1 font-bold">{'<'}</button>
+                        <button onClick={() => props.onNavigate('TODAY')} className="rounded bg-earth-brown-600 hover:bg-earth-brown-700 text-white px-3 py-1 font-bold">Bulan/Tahun Ini</button>
+                        <div className="flex items-center gap-2 ml-2">
+                          <select
+                            className="rounded border px-2 py-1 text-earth-brown-800 bg-white"
+                            value={calendarDate.getMonth()}
+                            onChange={e => {
+                              const newDate = new Date(calendarDate);
+                              newDate.setMonth(Number(e.target.value));
+                              setCalendarDate(newDate);
+                            }}
+                          >
+                            {months.map((m, i) => (
+                              <option key={m} value={i}>{m}</option>
+                            ))}
+                          </select>
+                          <select
+                            className="rounded border px-2 py-1 text-earth-brown-800 bg-white"
+                            value={calendarDate.getFullYear()}
+                            onChange={e => {
+                              const newDate = new Date(calendarDate);
+                              newDate.setFullYear(Number(e.target.value));
+                              setCalendarDate(newDate);
+                            }}
+                          >
+                            {years.map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <button onClick={() => props.onNavigate('NEXT')} className="rounded bg-earth-green-600 hover:bg-earth-green-700 text-white px-3 py-1 font-bold">{'>'}</button>
+                      </div>
+                      <div className="text-xl md:text-2xl font-bold text-earth-brown-800 text-center w-full md:w-auto">
+                        {months[calendarDate.getMonth()]} {calendarDate.getFullYear()}
+                      </div>
+                    </div>
+                  ),
+                  month: {
+                    header: ({ label }: { label: string }) => (
+                      <div className="text-earth-brown-700 font-semibold text-center text-base py-1">{label}</div>
+                    ),
+                  },
+                }}
+                messages={{
+                  next: '>',
+                  previous: '<',
+                  today: 'Hari ini',
+                  month: 'Bulan',
+                  week: 'Minggu',
+                  day: 'Hari',
+                  agenda: 'Agenda',
+                }}
+                eventPropGetter={(event: any) => {
+                  let bg = '#22c55e';
+                  if (event.resource.jenis === 'panen' || event.resource.jenis === 'harvest') bg = '#eab308';
+                  if (event.resource.jenis === 'inspeksi' || event.resource.jenis === 'inspection') bg = '#22d3ee';
+                  if (event.resource.jenis === 'pelatihan' || event.resource.jenis === 'training') bg = '#a78bfa';
+                  if (event.resource.jenis === 'rapat' || event.resource.jenis === 'meeting') bg = '#60a5fa';
+                  return {
+                    style: {
+                      backgroundColor: bg,
+                      color: '#fff',
+                      borderRadius: 12,
+                      border: 'none',
+                      boxShadow: '0 2px 8px 0 rgba(34,197,94,0.10)',
+                      fontWeight: 500,
+                      fontSize: 14,
+                      padding: '2px 8px',
+                      transition: 'box-shadow 0.2s',
+                    },
+                  };
+                }}
+              />
+            </div>
+            {/* Tugas Mendatang */}
+            <div className="w-full lg:w-80 flex-shrink-0">
+              <div className="bg-white rounded-xl shadow p-4">
+                <div className="font-bold text-earth-brown-800 text-lg mb-3">Tugas Mendatang</div>
+                <div className="space-y-3">
+                  {tugas
+                    .filter(item => {
+                      const now = new Date();
+                      const mulai = item.tanggal_mulai ? new Date(item.tanggal_mulai) : new Date(item.deadline);
+                      return mulai >= now;
+                    })
+                    .sort((a, b) => {
+                      const aDate = a.tanggal_mulai ? new Date(a.tanggal_mulai) : new Date(a.deadline);
+                      const bDate = b.tanggal_mulai ? new Date(b.tanggal_mulai) : new Date(b.deadline);
+                      return aDate.getTime() - bDate.getTime();
+                    })
+                    .slice(0, 5)
+                    .map((item) => (
+                      <div key={item.id} className="p-3 bg-earth-brown-50 rounded-lg cursor-pointer hover:bg-earth-green-100 transition"
+                        onClick={() => { setSelectedEvent(item); setOpenDialog(true); }}>
+                        <h4 className="font-medium text-earth-brown-800 text-sm">{item.judul}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Clock className="h-3 w-3 text-earth-brown-600" />
+                          <span className="text-xs text-earth-brown-600">
+                            {item.tanggal_mulai ? new Date(item.tanggal_mulai).toLocaleDateString('id-ID') : new Date(item.deadline).toLocaleDateString('id-ID')}
+                          </span>
+                        </div>
+                        <Badge className={`${getTypeColor(item.jenis)} text-xs mt-2`}>
+                          {item.jenis}
+                        </Badge>
+                      </div>
+                    ))}
+                  {tugas.filter(item => {
+                    const now = new Date();
+                    const mulai = item.tanggal_mulai ? new Date(item.tanggal_mulai) : new Date(item.deadline);
+                    return mulai >= now;
+                  }).length === 0 && (
+                    <div className="text-gray-400 text-sm text-center">Tidak ada tugas mendatang</div>
+                  )}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {agendaItems.map((item) => (
-                  <div key={item.id} className="p-4 bg-earth-green-50 rounded-lg border border-earth-green-200">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-earth-brown-800">{item.title}</h3>
-                        <p className="text-sm text-earth-brown-600 mt-1">{item.description}</p>
-                        <div className="flex items-center gap-4 mt-3 text-sm text-earth-brown-600">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {item.date.toLocaleDateString('id-ID')} • {item.date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
-                            {item.location}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge className={getTypeColor(item.type)}>
-                          {item.type}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        )}
 
-          {/* Upcoming Events */}
-          <Card className="harvest-card">
-            <CardHeader>
-              <CardTitle className="text-earth-brown-800">Agenda Mendatang</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {agendaItems.slice(0, 5).map((item) => (
-                  <div key={item.id} className="p-3 bg-earth-brown-50 rounded-lg">
-                    <h4 className="font-medium text-earth-brown-800 text-sm">{item.title}</h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Clock className="h-3 w-3 text-earth-brown-600" />
-                      <span className="text-xs text-earth-brown-600">
-                        {item.date.toLocaleDateString('id-ID')}
-                      </span>
-                    </div>
-                    <Badge className={`${getTypeColor(item.type)} text-xs mt-2`}>
-                      {item.type}
-                    </Badge>
-                  </div>
-                ))}
+        {/* Dialog detail tugas */}
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+          <DialogContent className="transition-all duration-200">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-earth-green-600" />
+                Detail Tugas
+              </DialogTitle>
+            </DialogHeader>
+            {selectedEvent && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className={
+                    selectedEvent.jenis === 'panen' || selectedEvent.jenis === 'harvest' ? 'bg-yellow-400 text-white' :
+                    selectedEvent.jenis === 'inspeksi' || selectedEvent.jenis === 'inspection' ? 'bg-cyan-400 text-white' :
+                    selectedEvent.jenis === 'pelatihan' || selectedEvent.jenis === 'training' ? 'bg-purple-400 text-white' :
+                    selectedEvent.jenis === 'rapat' || selectedEvent.jenis === 'meeting' ? 'bg-blue-400 text-white' :
+                    'bg-green-500 text-white'
+                  }>
+                    {selectedEvent.jenis}
+                  </Badge>
+                  <span className="text-xs text-gray-500">{selectedEvent.status}</span>
+                </div>
+                <h3 className="font-semibold text-earth-brown-800 text-lg mb-1">{selectedEvent.judul}</h3>
+                <p className="text-sm text-earth-brown-600 mb-2">{selectedEvent.deskripsi}</p>
+                <div className="flex items-center gap-2 text-sm text-earth-brown-600">
+                  <Clock className="h-4 w-4" />
+                  <span><b>Mulai:</b> {selectedEvent.tanggal_mulai ? new Date(selectedEvent.tanggal_mulai).toLocaleString('id-ID') : '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-earth-brown-600">
+                  <Clock className="h-4 w-4" />
+                  <span><b>Deadline:</b> {selectedEvent.deadline ? new Date(selectedEvent.deadline).toLocaleString('id-ID') : '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-earth-brown-600">
+                  <MapPin className="h-4 w-4" />
+                  <span><b>Wilayah:</b> {selectedEvent.konsultan_wilayah || '-'}</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
@@ -138,7 +327,7 @@ export default function AgendaPage() {
                 <div>
                   <p className="text-sm text-earth-brown-600">Rapat</p>
                   <p className="text-2xl font-bold text-earth-brown-800">
-                    {agendaItems.filter(item => item.type === 'meeting').length}
+                    {tugas.filter(item => item.jenis === 'meeting' || item.jenis === 'rapat').length}
                   </p>
                 </div>
               </div>
@@ -154,7 +343,7 @@ export default function AgendaPage() {
                 <div>
                   <p className="text-sm text-earth-brown-600">Inspeksi</p>
                   <p className="text-2xl font-bold text-earth-brown-800">
-                    {agendaItems.filter(item => item.type === 'inspection').length}
+                    {tugas.filter(item => item.jenis === 'inspection' || item.jenis === 'inspeksi').length}
                   </p>
                 </div>
               </div>
@@ -170,7 +359,7 @@ export default function AgendaPage() {
                 <div>
                   <p className="text-sm text-earth-brown-600">Panen</p>
                   <p className="text-2xl font-bold text-earth-brown-800">
-                    {agendaItems.filter(item => item.type === 'harvest').length}
+                    {tugas.filter(item => item.jenis === 'harvest' || item.jenis === 'panen').length}
                   </p>
                 </div>
               </div>
@@ -184,9 +373,9 @@ export default function AgendaPage() {
                   <Users className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-earth-brown-600">Training</p>
+                  <p className="text-sm text-earth-brown-600">Pelatihan</p>
                   <p className="text-2xl font-bold text-earth-brown-800">
-                    {agendaItems.filter(item => item.type === 'training').length}
+                    {tugas.filter(item => item.jenis === 'training' || item.jenis === 'pelatihan').length}
                   </p>
                 </div>
               </div>

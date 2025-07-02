@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MessageCircle, Send, User, Bot } from "lucide-react";
 
+
+
 const suggestionsList = [
   "Apa tanaman terbaik untuk musim hujan?",
   "Bagaimana cara mengatasi hama pada padi?",

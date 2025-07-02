@@ -260,7 +260,7 @@ export const WILAYAH_DIY = {
 };
 
 export default function PengaturanAkunPage() {
-  const { user, switchRole, setUser } = useAuth();
+  const { user, switchRole } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
@@ -344,7 +344,6 @@ export default function PengaturanAkunPage() {
         throw new Error('Gagal menyimpan perubahan');
       }
       const updatedUser = await getUserProfile(user.id);
-      if (typeof setUser === 'function') setUser(updatedUser);
       toast({
         title: 'Sukses',
         description: 'Profil berhasil diperbarui',
@@ -488,38 +487,37 @@ export default function PengaturanAkunPage() {
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="kabupaten" className="block text-sm font-medium text-gray-700 mb-1">Kabupaten/Kota</Label>
-                    <Select value={kabupaten} onValueChange={val => { setKabupaten(val); setKecamatan(''); setDesa(''); setFormData(f => ({ ...f, kabupaten: val, kecamatan: '', desa: '' })); }}>
-                      <SelectTrigger><SelectValue placeholder="Pilih kabupaten/kota" /></SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(WILAYAH_DIY).map(kab => (
-                          <SelectItem key={kab} value={kab}>{kab}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-2">
+                    <Label>Wilayah</Label>
+                    {formData.wilayah ? (
+                      <Input value={formData.wilayah} readOnly disabled className="bg-gray-50" />
+                    ) : (
+                      <Input value={formData.wilayah} onChange={e => setFormData(f => ({ ...f, wilayah: e.target.value }))} placeholder="Isi wilayah" />
+                    )}
                   </div>
-                  <div>
-                    <Label htmlFor="kecamatan" className="block text-sm font-medium text-gray-700 mb-1 mt-4">Kecamatan</Label>
-                    <Select value={kecamatan} onValueChange={val => { setKecamatan(val); setDesa(''); setFormData(f => ({ ...f, kecamatan: val, desa: '' })); }} disabled={!kabupaten}>
-                      <SelectTrigger><SelectValue placeholder="Pilih kecamatan" /></SelectTrigger>
-                      <SelectContent>
-                        {kecamatanList.map(kec => (
-                          <SelectItem key={kec} value={kec}>{kec}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-2">
+                    <Label>Kabupaten</Label>
+                    {formData.kabupaten ? (
+                      <Input value={formData.kabupaten} readOnly disabled className="bg-gray-50" />
+                    ) : (
+                      <Input value={formData.kabupaten} onChange={e => setFormData(f => ({ ...f, kabupaten: e.target.value }))} placeholder="Isi kabupaten" />
+                    )}
                   </div>
-                  <div>
-                    <Label htmlFor="desa" className="block text-sm font-medium text-gray-700 mb-1 mt-4">Desa</Label>
-                    <Select value={desa} onValueChange={val => { setDesa(val); setFormData(f => ({ ...f, desa: val })); }} disabled={!kecamatan}>
-                      <SelectTrigger><SelectValue placeholder="Pilih desa" /></SelectTrigger>
-                      <SelectContent>
-                        {desaList.map(ds => (
-                          <SelectItem key={ds} value={ds}>{ds}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-2">
+                    <Label>Kecamatan</Label>
+                    {formData.kecamatan ? (
+                      <Input value={formData.kecamatan} readOnly disabled className="bg-gray-50" />
+                    ) : (
+                      <Input value={formData.kecamatan} onChange={e => setFormData(f => ({ ...f, kecamatan: e.target.value }))} placeholder="Isi kecamatan" />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Desa</Label>
+                    {formData.desa ? (
+                      <Input value={formData.desa} readOnly disabled className="bg-gray-50" />
+                    ) : (
+                      <Input value={formData.desa} onChange={e => setFormData(f => ({ ...f, desa: e.target.value }))} placeholder="Isi desa" />
+                    )}
                   </div>
                 </div>
 
