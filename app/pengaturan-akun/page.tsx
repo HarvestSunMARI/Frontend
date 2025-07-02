@@ -12,6 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { User, Settings, Shield, Bell, Key, MapPin, Save, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createClient } from '@supabase/supabase-js';
+import { getUserProfile } from '@/services/userService';
+
 
 export const WILAYAH_DIY = {
   "Bantul": {
@@ -257,11 +259,8 @@ export const WILAYAH_DIY = {
   }
 };
 
-// Inisialisasi Supabase client (gunakan env var yang sama dengan backend)
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-
 export default function PengaturanAkunPage() {
-  const { user, switchRole } = useAuth();
+  const { user, switchRole, setUser } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
@@ -271,7 +270,10 @@ export default function PengaturanAkunPage() {
     email: user?.email || '',
     phone: user?.phone || '',
     wilayah: user?.wilayah || '',
-    desa: user?.desa || ''
+    desa: user?.desa || '',
+    kabupaten: user?.kabupaten || '',
+    kecamatan: user?.kecamatan || '',
+    avatar: user?.avatar || ''
   });
   const [kabupaten, setKabupaten] = useState(formData.kabupaten || '');
   const [kecamatan, setKecamatan] = useState(formData.kecamatan || '');
@@ -280,24 +282,44 @@ export default function PengaturanAkunPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
   const [uploading, setUploading] = useState(false);
 
-  const kecamatanList = kabupaten ? Object.keys(WILAYAH_DIY[kabupaten]) : [];
-  const desaList = kabupaten && kecamatan ? WILAYAH_DIY[kabupaten][kecamatan] : [];
+  const kecamatanList = kabupaten ? Object.keys(WILAYAH_DIY[kabupaten as keyof typeof WILAYAH_DIY]) : [];
+  const desaList =
+    kabupaten && kecamatan
+      ? (
+          WILAYAH_DIY[kabupaten as keyof typeof WILAYAH_DIY] as Record<string, string[]>
+        )[kecamatan] || []
+      : [];
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        wilayah: user.wilayah || '',
-        desa: user.desa || ''
-      });
-    }
+    const fetchUserProfile = async () => {
+      if (user && user.id) {
+        try {
+          const freshUser = await getUserProfile(user.id);
+          setFormData({
+            name: freshUser.name || '',
+            email: freshUser.email || '',
+            phone: freshUser.phone || '',
+            wilayah: freshUser.wilayah || '',
+            desa: freshUser.desa || '',
+            kabupaten: freshUser.kabupaten || '',
+            kecamatan: freshUser.kecamatan || '',
+            avatar: freshUser.avatar || ''
+          });
+          setKabupaten(freshUser.kabupaten || '');
+          setKecamatan(freshUser.kecamatan || '');
+          setDesa(freshUser.desa || '');
+          setAvatarPreview(freshUser.avatar || null);
+        } catch (err) {
+          toast({ title: 'Error', description: 'Gagal mengambil data profil', variant: 'destructive' });
+        }
+      }
+    };
+    fetchUserProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleSave = async () => {
     if (!user) return;
-
     setSaving(true);
     try {
       const response = await fetch(`http://localhost:4000/api/users/${user.id}`, {
@@ -312,14 +334,17 @@ export default function PengaturanAkunPage() {
           email: formData.email,
           phone: formData.phone,
           wilayah: formData.wilayah,
-          desa: formData.desa
+          desa: formData.desa,
+          kabupaten: kabupaten,
+          kecamatan: kecamatan,
+          avatar_url: formData.avatar
         }),
       });
-
       if (!response.ok) {
         throw new Error('Gagal menyimpan perubahan');
       }
-
+      const updatedUser = await getUserProfile(user.id);
+      if (typeof setUser === 'function') setUser(updatedUser);
       toast({
         title: 'Sukses',
         description: 'Profil berhasil diperbarui',
@@ -337,17 +362,28 @@ export default function PengaturanAkunPage() {
 
   // Fungsi upload avatar
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleAvatarChange called');
     const file = e.target.files?.[0];
+    console.log('file:', file);
     if (!file || !user) return;
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
     setUploading(true);
     try {
+      // Inisialisasi Supabase di dalam fungsi (hanya berjalan di client)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Missing Supabase environment variables');
+      }
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
       const filePath = `user-${user.id}/${file.name}`;
-      const { error } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+      const { data, error } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
       if (error) throw error;
-      const { publicUrl } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      setFormData(f => ({ ...f, avatar: publicUrl }));
+      const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      console.log('Avatar publicUrl:', publicUrlData.publicUrl);
+      setFormData(f => ({ ...f, avatar: publicUrlData.publicUrl }));
       toast({ title: 'Sukses', description: 'Foto profil berhasil diupload' });
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
