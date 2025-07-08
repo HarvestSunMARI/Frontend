@@ -30,9 +30,12 @@ import {
 import { regionalPerformanceData, weatherAlerts, tasks, reports, systemLogs } from '@/data/sampleData';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function PenyuluhDashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const totalConsultants = 8;
   const activeTasks = tasks.filter(task => task.status !== 'completed').length;
   const completedTasks = tasks.filter(task => task.status === 'completed').length;
@@ -46,6 +49,12 @@ export default function PenyuluhDashboard() {
     { name: 'Completed', value: tasks.filter(t => t.status === 'completed').length, color: '#22c55e' }
   ];
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading]);
+
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -58,7 +67,7 @@ export default function PenyuluhDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="harvest-card">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Konsultan</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Gapoktan</CardTitle>
                 <Users className="h-4 w-4 text-earth-green-600" />
               </CardHeader>
               <CardContent>
@@ -195,7 +204,7 @@ export default function PenyuluhDashboard() {
               <CardHeader>
                 <CardTitle className="text-earth-brown-800 flex items-center gap-2">
                   <Activity className="h-5 w-5 text-earth-green-600" />
-                  Aktivitas Konsultan
+                  Aktivitas Gapoktan
                 </CardTitle>
               </CardHeader>
               <CardContent>

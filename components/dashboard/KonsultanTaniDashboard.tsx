@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { harvestData, weatherAlerts, productivityData, harvestTrendData, checklistItems, agendaItems, reports } from '@/data/sampleData';
 
-export function KonsultanTaniDashboard() {
+export function GapoktanDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
 
   const totalHarvest = harvestData.reduce((acc, item) => acc + item.quantity, 0);

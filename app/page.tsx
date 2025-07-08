@@ -16,7 +16,7 @@ export default function Home() {
           router.push('/dashboard/admin');
         } else if (user.role === 'penyuluh') {
           router.push('/dashboard/penyuluh');
-        } else if (user.role === 'konsultan_tani') {
+        } else if (user.role === 'gapoktan') {
           router.push('/dashboard/konsultan');
         } else {
           router.push('/dashboard/konsultan');

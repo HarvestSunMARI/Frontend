@@ -33,7 +33,7 @@ import { harvestData, weatherAlerts, productivityData, harvestTrendData, checkli
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function KonsultanTaniDashboard() {
+export default function GapoktanDashboard() {
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
 

@@ -1,17 +1,11 @@
-export type UserRole = 'konsultan_tani' | 'penyuluh' | 'admin';
+export type UserRole = 'gapoktan' | 'penyuluh' | 'admin';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  avatar?: string; // URL foto profil
-  region?: string;
-  phone?: string;
   wilayah?: string;
-  desa?: string;
-  kabupaten?: string;
-  kecamatan?: string;
 }
 
 export interface WeatherAlert {
@@ -93,4 +87,32 @@ export interface AgendaItem {
   date: Date;
   type: 'meeting' | 'inspection' | 'harvest' | 'training';
   location: string;
+}
+
+export interface Tugas {
+  id: string;
+  judul: string;
+  deskripsi?: string;
+  penyuluh_id: string;
+  penyuluh_nama: string;
+  gapoktan_id: string;
+  gapoktan_nama: string;
+  gapoktan_wilayah?: string;
+  tanggal_dibuat: string;
+  tanggal_mulai?: string;
+  deadline: string;
+  status: string;
+  lampiran_url?: string;
+  created_at: string;
+  updated_at: string;
+  jenis: string;
+}
+
+export interface Gapoktan {
+  id: string;
+  name: string;
+  email: string;
+  wilayah?: string;
+  desa_binaan?: string[];
+  ketua_gapoktan?: boolean;
 }

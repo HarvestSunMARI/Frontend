@@ -14,12 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  getKonsultanList, 
+  getGapoktanList, 
   createTugas, 
   getTugasByPenyuluh, 
   deleteTugas,
   getTugasById,
-  Konsultan,
+  Gapoktan,
   Tugas,
   TugasData
 } from '@/services/tugasService';
@@ -52,7 +52,7 @@ const jenisTugasOptions = [
 export default function TugasPage() {
   const { toast } = useToast();
   const [tugas, setTugas] = useState<Tugas[]>([]);
-  const [konsultanList, setKonsultanList] = useState<Konsultan[]>([]);
+  const [gapoktanList, setGapoktanList] = useState<Gapoktan[]>([]);
   const [isModalTambahOpen, setIsModalTambahOpen] = useState(false);
   const [isModalDetailOpen, setIsModalDetailOpen] = useState(false);
   const [selectedTugas, setSelectedTugas] = useState<Tugas | null>(null);
@@ -62,7 +62,7 @@ export default function TugasPage() {
     judul: "",
     deskripsi: "",
     jenis: "",
-    konsultanId: "",
+    gapoktanId: "",
     tanggalMulai: "",
     deadline: "",
     lampiran: null as File | null
@@ -76,12 +76,12 @@ export default function TugasPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [tugasData, konsultanData] = await Promise.all([
+      const [tugasData, gapoktanData] = await Promise.all([
         getTugasByPenyuluh(),
-        getKonsultanList()
+        getGapoktanList()
       ]);
       setTugas(tugasData);
-      setKonsultanList(konsultanData);
+      setGapoktanList(gapoktanData);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -94,10 +94,10 @@ export default function TugasPage() {
   };
 
   const handleTambahTugas = async () => {
-    if (!formData.judul || !formData.konsultanId || !formData.deadline || !formData.jenis) {
+    if (!formData.judul || !formData.gapoktanId || !formData.deadline || !formData.jenis) {
       toast({
         title: "Error",
-        description: "Judul, jenis tugas, konsultan, dan deadline harus diisi",
+        description: "Judul, jenis tugas, gapoktan, dan deadline harus diisi",
         variant: "destructive"
       });
       return;
@@ -118,7 +118,7 @@ export default function TugasPage() {
         judul: formData.judul,
         deskripsi: formData.deskripsi,
         jenis: formData.jenis,
-        konsultan_id: formData.konsultanId,
+        gapoktan_id: formData.gapoktanId,
         tanggal_mulai: formData.tanggalMulai || undefined,
         deadline: formData.deadline,
         lampiran_url: lampiranUrl
@@ -129,7 +129,7 @@ export default function TugasPage() {
         judul: "",
         deskripsi: "",
         jenis: "",
-        konsultanId: "",
+        gapoktanId: "",
         tanggalMulai: "",
         deadline: "",
         lampiran: null
@@ -189,122 +189,118 @@ export default function TugasPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2 text-earth-green-700 mb-1">
-              <ClipboardList className="h-6 w-6 text-earth-green-600" /> Tugas untuk Konsultan
+              <ClipboardList className="h-6 w-6 text-earth-green-600" /> Tugas untuk Gapoktan
             </h1>
-            <p className="text-earth-brown-700">Kelola dan distribusikan tugas ke konsultan tani di wilayah Anda.</p>
+            <p className="text-earth-brown-700">Kelola dan distribusikan tugas ke gapoktan di wilayah Anda.</p>
           </div>
-          <Dialog open={isModalTambahOpen} onOpenChange={setIsModalTambahOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow">
-                <Plus className="h-5 w-5" /> Tambah Tugas
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Tambah Tugas Baru</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="judul">Judul Tugas *</Label>
-                  <Input
-                    id="judul"
-                    value={formData.judul}
-                    onChange={(e) => setFormData({...formData, judul: e.target.value})}
-                    placeholder="Masukkan judul tugas"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="deskripsi">Deskripsi Tugas</Label>
-                  <Textarea
-                    id="deskripsi"
-                    value={formData.deskripsi}
-                    onChange={(e) => setFormData({...formData, deskripsi: e.target.value})}
-                    placeholder="Masukkan deskripsi tugas"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="jenis">Jenis Tugas *</Label>
-                  <Select
-                    value={formData.jenis}
-                    onValueChange={val => setFormData({ ...formData, jenis: val })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih jenis tugas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jenisTugasOptions.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="konsultan">Pilih Konsultan *</Label>
-                  <Select
-                    value={formData.konsultanId}
-                    onValueChange={val => setFormData({ ...formData, konsultanId: val })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih konsultan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {konsultanList.map(k => (
-                        <SelectItem key={k.id} value={k.id}>
-                          {k.name} {k.wilayah ? `- ${k.wilayah}` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="tanggalMulai">Tanggal Mulai</Label>
-                    <Input
-                      id="tanggalMulai"
-                      type="date"
-                      value={formData.tanggalMulai}
-                      onChange={(e) => setFormData({...formData, tanggalMulai: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="deadline">Deadline *</Label>
-                    <Input
-                      id="deadline"
-                      type="date"
-                      value={formData.deadline}
-                      onChange={(e) => setFormData({...formData, deadline: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="lampiran">Lampiran (Opsional)</Label>
-                  <Input
-                    id="lampiran"
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    onChange={e => setFormData({ ...formData, lampiran: e.target.files?.[0] || null })}
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsModalTambahOpen(false)} disabled={submitting}>
-                    Batal
-                  </Button>
-                  <Button onClick={handleTambahTugas} className="bg-green-600 hover:bg-green-700" disabled={submitting}>
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Menyimpan...
-                      </>
-                    ) : (
-                      'Simpan Tugas'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setIsModalTambahOpen(true)} className="bg-green-700 hover:bg-green-800 text-white gap-2">
+            <Plus className="h-4 w-4" /> Tambah Tugas
+          </Button>
         </div>
+
+        {/* Modal Tambah Tugas */}
+        <Dialog open={isModalTambahOpen} onOpenChange={setIsModalTambahOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Tambah Tugas Baru</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleTambahTugas();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <Label htmlFor="judul">Judul Tugas</Label>
+                <Input
+                  id="judul"
+                  value={formData.judul}
+                  onChange={e => setFormData({ ...formData, judul: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="deskripsi">Deskripsi</Label>
+                <Textarea
+                  id="deskripsi"
+                  value={formData.deskripsi}
+                  onChange={e => setFormData({ ...formData, deskripsi: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="jenis">Jenis Tugas</Label>
+                <Select
+                  value={formData.jenis}
+                  onValueChange={val => setFormData({ ...formData, jenis: val })}
+                  required
+                >
+                  <SelectTrigger id="jenis">
+                    <SelectValue placeholder="Pilih Jenis Tugas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jenisTugasOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="gapoktan">Gapoktan</Label>
+                <Select
+                  value={formData.gapoktanId}
+                  onValueChange={val => setFormData({ ...formData, gapoktanId: val })}
+                  required
+                >
+                  <SelectTrigger id="gapoktan">
+                    <SelectValue placeholder="Pilih Gapoktan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gapoktanList.map(g => (
+                      <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="tanggalMulai">Tanggal Mulai</Label>
+                <Input
+                  id="tanggalMulai"
+                  type="date"
+                  value={formData.tanggalMulai}
+                  onChange={e => setFormData({ ...formData, tanggalMulai: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="deadline">Deadline</Label>
+                <Input
+                  id="deadline"
+                  type="date"
+                  value={formData.deadline}
+                  onChange={e => setFormData({ ...formData, deadline: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="lampiran">Lampiran (opsional)</Label>
+                <Input
+                  id="lampiran"
+                  type="file"
+                  onChange={e => setFormData({ ...formData, lampiran: e.target.files?.[0] || null })}
+                  accept="image/*,application/pdf"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsModalTambahOpen(false)} disabled={submitting}>
+                  Batal
+                </Button>
+                <Button type="submit" className="bg-green-700 text-white" disabled={submitting}>
+                  {submitting ? 'Menyimpan...' : 'Simpan'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Daftar Tugas Aktif */}
         <Card>
@@ -329,7 +325,7 @@ export default function TugasPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Judul Tugas</TableHead>
-                    <TableHead>Konsultan / Wilayah</TableHead>
+                    <TableHead>Gapoktan / Wilayah</TableHead>
                     <TableHead>Tanggal Dibuat</TableHead>
                     <TableHead>Deadline</TableHead>
                     <TableHead>Status</TableHead>
@@ -344,12 +340,9 @@ export default function TugasPage() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-gray-500" />
                           <div>
-                            <div className="font-medium">{tugas.konsultan_nama}</div>
-                            {tugas.konsultan_wilayah && (
-                              <div className="text-sm text-gray-500 flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {tugas.konsultan_wilayah}
-                              </div>
+                            <div className="font-medium">{tugas.gapoktan_nama}</div>
+                            {tugas.gapoktan_wilayah && (
+                              <div className="text-xs text-gray-500">{tugas.gapoktan_wilayah}</div>
                             )}
                           </div>
                         </div>
@@ -406,73 +399,6 @@ export default function TugasPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Modal Detail Tugas */}
-        <Dialog open={isModalDetailOpen} onOpenChange={setIsModalDetailOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Detail Tugas</DialogTitle>
-            </DialogHeader>
-            {selectedTugas && (
-              <div className="space-y-4">
-                <div>
-                  <Label className="font-medium">Judul Tugas</Label>
-                  <p className="text-lg font-semibold">{selectedTugas.judul}</p>
-                </div>
-                <div>
-                  <Label className="font-medium">Konsultan</Label>
-                  <p className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    {selectedTugas.konsultan_nama} {selectedTugas.konsultan_wilayah && `- ${selectedTugas.konsultan_wilayah}`}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-medium">Tanggal Dibuat</Label>
-                    <p className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(selectedTugas.tanggal_dibuat).toLocaleDateString('id-ID')}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="font-medium">Deadline</Label>
-                    <p className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(selectedTugas.deadline).toLocaleDateString('id-ID')}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <Label className="font-medium">Status</Label>
-                  <Badge className={getStatusColor(selectedTugas.status)}>
-                    {selectedTugas.status}
-                  </Badge>
-                </div>
-                {selectedTugas.deskripsi && (
-                  <div>
-                    <Label className="font-medium">Deskripsi</Label>
-                    <p className="text-gray-600 bg-gray-50 p-3 rounded-lg">
-                      {selectedTugas.deskripsi}
-                    </p>
-                  </div>
-                )}
-                {selectedTugas.lampiran_url && (
-                  <div>
-                    <Label className="font-medium">Lampiran</Label>
-                    <a 
-                      href={selectedTugas.lampiran_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline"
-                    >
-                      Lihat Lampiran
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

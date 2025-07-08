@@ -21,7 +21,7 @@ const sampleUsers: User[] = [
     id: '1',
     name: 'Ahmad Susanto',
     email: 'ahmad@harvestsun.com',
-    role: 'konsultan_tani',
+    role: 'gapoktan',
     region: 'Jawa Barat',
     phone: '+62812345671',
     avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'

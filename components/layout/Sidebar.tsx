@@ -32,19 +32,19 @@ interface SidebarItem {
 }
 
 const sidebarItems: SidebarItem[] = [
-  // Konsultan Tani
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/konsultan', roles: ['konsultan_tani'] },
-  { id: 'agenda', label: 'Agenda', icon: Calendar, href: '/agenda', roles: ['konsultan_tani'] },
-  { id: 'checklist', label: 'Checklist', icon: CheckSquare, href: '/checklist', roles: ['konsultan_tani'] },
-  { id: 'laporan', label: 'Laporan', icon: FileText, href: '/laporan', roles: ['konsultan_tani', 'penyuluh'] },
-  { id: 'peta-lahan', label: 'Peta Lahan', icon: Map, href: '/peta-lahan', roles: ['konsultan_tani'] },
-  { id: 'pengaturan-akun', label: 'Pengaturan Akun', icon: Settings, href: '/pengaturan-akun', roles: ['konsultan_tani', 'penyuluh'] },
-  { id: 'chatbot', label: 'Chatbot', icon: MessageCircle, href: '/chatbot', roles: ['konsultan_tani'] },
+  // Gapoktan
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/gapoktan', roles: ['gapoktan'] },
+  { id: 'agenda', label: 'Agenda', icon: Calendar, href: '/agenda', roles: ['gapoktan'] },
+  { id: 'checklist', label: 'Checklist', icon: CheckSquare, href: '/checklist', roles: ['gapoktan'] },
+  { id: 'laporan', label: 'Laporan', icon: FileText, href: '/laporan', roles: ['gapoktan', 'penyuluh'] },
+  { id: 'peta-lahan', label: 'Peta Lahan', icon: Map, href: '/peta-lahan', roles: ['gapoktan'] },
+  { id: 'pengaturan-akun', label: 'Pengaturan Akun', icon: Settings, href: '/pengaturan-akun', roles: ['gapoktan', 'penyuluh'] },
+  { id: 'chatbot', label: 'Chatbot', icon: MessageCircle, href: '/chatbot', roles: ['gapoktan'] },
   
   // Penyuluh
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/penyuluh', roles: ['penyuluh'] },
   { id: 'wilayah', label: 'Manajemen Wilayah', icon: MapPin, href: '/wilayah', roles: ['penyuluh'] },
-  { id: 'konsultan-tani', label: 'Konsultan Tani', icon: Users, href: '/konsultan-tani', roles: ['penyuluh'] },
+  { id: 'gapoktan', label: 'Gapoktan', icon: Users, href: '/gapoktan', roles: ['penyuluh'] },
   { id: 'tugas', label: 'Tugas', icon: ClipboardList, href: '/tugas', roles: ['penyuluh'] },
   { id: 'peta-wilayah', label: 'Peta Wilayah', icon: Map, href: '/peta-wilayah', roles: ['penyuluh'] },
   { id: 'chatbot', label: 'Chatbot', icon: MessageCircle, href: '/chatbot', roles: ['penyuluh'] },

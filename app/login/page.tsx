@@ -14,30 +14,27 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
     try {
-      const res = await fetch("http://localhost:4000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const res = await fetch('http://localhost:4000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login gagal");
-      if (remember) {
-        localStorage.setItem("app_user", JSON.stringify(data.user));
-        localStorage.setItem("token", data.access_token);
+      if (!res.ok) throw new Error(data.error || 'Login gagal');
+      // Simpan user dan token ke localStorage
+      localStorage.setItem('app_user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.access_token);
+      // Redirect sesuai role
+      if (data.user.role === 'gapoktan') {
+        router.push('/dashboard/konsultan');
+      } else if (data.user.role === 'penyuluh') {
+        router.push('/dashboard/penyuluh');
+      } else if (data.user.role === 'admin') {
+        router.push('/dashboard/admin');
       } else {
-        sessionStorage.setItem("app_user", JSON.stringify(data.user));
-        sessionStorage.setItem("token", data.access_token);
-      }
-      if (data.user.role === "konsultan_tani") {
-        router.push("/dashboard/konsultan");
-      } else if (data.user.role === "penyuluh") {
-        router.push("/dashboard/penyuluh");
-      } else if (data.user.role === "admin") {
-        router.push("/dashboard/admin");
-      } else {
-        router.push("/dashboard/konsultan");
+        router.push('/dashboard/konsultan');
       }
     } catch (err: any) {
       setError(err.message);

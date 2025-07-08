@@ -528,7 +528,7 @@ export default function PengaturanAkunPage() {
                     <Button 
                       variant="outline" 
                       onClick={() => {
-                        const roles = ['konsultan_tani', 'penyuluh', 'admin'];
+                        const roles = ['gapoktan', 'penyuluh', 'admin'];
                         const currentIndex = roles.indexOf(user.role);
                         const nextRole = roles[(currentIndex + 1) % roles.length];
                         switchRole(nextRole as any);

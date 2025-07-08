@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Plus, Clock, MapPin, Users, BookOpen, CheckCircle, Briefcase } from 'lucide-react';
-import { getTugasByKonsultan, Tugas } from '@/services/tugasService';
+import { getTugasByGapoktan, getTugasByPenyuluh, Tugas } from '@/services/tugasService';
 import { Calendar as CalendarUI } from '@/components/ui/calendar';
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
 import { Calendar as BigCalendar, momentLocalizer, Event as CalendarEvent } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { parseISO } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 
 const localizer = momentLocalizer(require('moment'));
 
@@ -38,6 +39,7 @@ function CustomEvent({ event }: { event: any }) {
 }
 
 export default function AgendaPage() {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [tugas, setTugas] = useState<Tugas[]>([]);
@@ -52,7 +54,12 @@ export default function AgendaPage() {
       setLoading(true);
       setError(null);
       try {
-        const data = await getTugasByKonsultan();
+        let data: Tugas[] = [];
+        if (user?.role === 'penyuluh') {
+          data = await getTugasByPenyuluh();
+        } else {
+          data = await getTugasByGapoktan();
+        }
         setTugas(data);
       } catch (err: any) {
         setError(err.message || 'Gagal memuat tugas');
@@ -60,8 +67,8 @@ export default function AgendaPage() {
         setLoading(false);
       }
     };
-    fetchTugas();
-  }, []);
+    if (user) fetchTugas();
+  }, [user]);
 
   const getAgendaForDate = (date: Date) => {
     return tugas.filter(item => {
@@ -128,7 +135,7 @@ export default function AgendaPage() {
             <h1 className="text-3xl font-bold text-earth-brown-800">Tugas</h1>
             <p className="text-earth-brown-600 mt-1">Daftar tugas yang diberikan oleh penyuluh</p>
           </div>
-          {/* Tombol tambah agenda bisa disembunyikan untuk konsultan */}
+          {/* Tombol tambah agenda bisa disembunyikan untuk gapoktan */}
         </div>
 
         {loading ? (
@@ -308,8 +315,12 @@ export default function AgendaPage() {
                   <span><b>Deadline:</b> {selectedEvent.deadline ? new Date(selectedEvent.deadline).toLocaleString('id-ID') : '-'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-earth-brown-600">
+                  <Users className="h-4 w-4" />
+                  <span><b>Gapoktan:</b> {selectedEvent.gapoktan_nama || '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-earth-brown-600">
                   <MapPin className="h-4 w-4" />
-                  <span><b>Wilayah:</b> {selectedEvent.konsultan_wilayah || '-'}</span>
+                  <span><b>Wilayah:</b> {selectedEvent.gapoktan_wilayah || '-'}</span>
                 </div>
               </div>
             )}

@@ -8,7 +8,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [role, setRole] = useState("konsultan_tani");
+  const [role, setRole] = useState("gapoktan");
   const [wilayah, setWilayah] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,9 +22,9 @@ export default function RegisterPage() {
       return;
     }
     
-    // Validasi wilayah untuk konsultan
-    if (role === "konsultan_tani" && !wilayah.trim()) {
-      setError("Wilayah harus diisi untuk konsultan tani");
+    // Validasi wilayah untuk gapoktan
+    if (role === "gapoktan" && !wilayah.trim()) {
+      setError("Wilayah harus diisi untuk gapoktan");
       return;
     }
     
@@ -38,14 +38,14 @@ export default function RegisterPage() {
           email, 
           password, 
           role, 
-          wilayah: role === "konsultan_tani" ? wilayah : undefined 
+          wilayah: role === "gapoktan" ? wilayah : undefined 
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registrasi gagal");
       if (data.user && data.user.role) {
-        if (data.user.role === "konsultan_tani") {
-          router.push("/dashboard/konsultan");
+        if (data.user.role === "gapoktan") {
+          router.push("/dashboard/gapoktan");
         } else if (data.user.role === "penyuluh") {
           router.push("/dashboard/penyuluh");
         } else if (data.user.role === "admin") {
@@ -157,14 +157,14 @@ export default function RegisterPage() {
                 value={role}
                 onChange={e => setRole(e.target.value)}
               >
-                <option value="konsultan_tani">Konsultan Tani</option>
+                <option value="gapoktan">Gapoktan</option>
                 <option value="penyuluh">Penyuluh</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
             
-            {/* Wilayah field - hanya untuk konsultan */}
-            {role === "konsultan_tani" && (
+            {/* Wilayah field - hanya untuk gapoktan */}
+            {role === "gapoktan" && (
               <div>
                 <label htmlFor="wilayah" className="block text-sm font-medium text-gray-700 mb-1">
                   Wilayah/Desa <span className="text-red-500">*</span>

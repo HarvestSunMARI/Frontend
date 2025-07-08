@@ -17,13 +17,13 @@ interface User {
 const roleColor: Record<string, string> = {
   admin: 'bg-blue-100 text-blue-700',
   penyuluh: 'bg-green-100 text-green-700',
-  konsultan_tani: 'bg-yellow-100 text-yellow-700',
+  gapoktan: 'bg-yellow-100 text-yellow-700',
 };
 
 const roleOptions = [
   { value: 'admin', label: 'Admin' },
   { value: 'penyuluh', label: 'Penyuluh' },
-  { value: 'konsultan_tani', label: 'Konsultan Tani' },
+  { value: 'gapoktan', label: 'Gapoktan' },
 ];
 
 const allDesa: string[] = [];

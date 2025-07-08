@@ -1,31 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getKonsultanList, Konsultan } from "@/services/tugasService";
+import { getGapoktanList, Gapoktan } from "@/services/tugasService";
 import { useAuth } from "@/hooks/useAuth";
 import { Users } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
-export default function KonsultanTaniPage() {
+export default function GapoktanPage() {
   const { user } = useAuth();
-  const [konsultanList, setKonsultanList] = useState<Konsultan[]>([]);
+  const [gapoktanList, setGapoktanList] = useState<Gapoktan[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchKonsultan = async () => {
+    const fetchGapoktan = async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getKonsultanList();
-        setKonsultanList(data);
+        const data = await getGapoktanList();
+        setGapoktanList(data);
       } catch (e: any) {
-        setError(e.message || "Gagal mengambil data konsultan");
+        setError(e.message || "Gagal mengambil data gapoktan");
       } finally {
         setLoading(false);
       }
     };
-    fetchKonsultan();
+    fetchGapoktan();
   }, [user]);
 
   return (
@@ -33,15 +33,15 @@ export default function KonsultanTaniPage() {
       <div className="p-8 max-w-3xl mx-auto">
         <div className="mb-6 flex items-center gap-2">
           <Users className="w-6 h-6 text-earth-green-600" />
-          <h1 className="text-2xl font-bold text-earth-brown-800">Daftar Konsultan Tani Satu Wilayah</h1>
+          <h1 className="text-2xl font-bold text-earth-brown-800">Daftar Gapoktan Satu Wilayah</h1>
         </div>
         <div className="bg-white rounded-xl shadow border overflow-x-auto">
           {loading ? (
             <div className="p-8 text-center text-earth-brown-400">Memuat...</div>
           ) : error ? (
             <div className="p-8 text-center text-red-500">{error}</div>
-          ) : konsultanList.length === 0 ? (
-            <div className="p-8 text-center text-earth-brown-400">Belum ada konsultan di wilayah ini</div>
+          ) : gapoktanList.length === 0 ? (
+            <div className="p-8 text-center text-earth-brown-400">Belum ada gapoktan di wilayah ini</div>
           ) : (
             <table className="min-w-full divide-y divide-earth-brown-200">
               <thead className="bg-earth-green-50">
@@ -52,11 +52,11 @@ export default function KonsultanTaniPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-earth-brown-100">
-                {konsultanList.map((k, idx) => (
-                  <tr key={k.id} className={idx % 2 === 0 ? "bg-earth-green-50/40" : ""}>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-earth-brown-800">{k.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-earth-brown-700">{k.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-earth-green-700">{k.wilayah}</td>
+                {gapoktanList.map((g, idx) => (
+                  <tr key={g.id} className={idx % 2 === 0 ? "bg-earth-green-50/40" : ""}>
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-earth-brown-800">{g.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-earth-brown-700">{g.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-earth-green-700">{g.wilayah}</td>
                   </tr>
                 ))}
               </tbody>

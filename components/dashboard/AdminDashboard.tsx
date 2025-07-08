@@ -36,7 +36,7 @@ export function AdminDashboard() {
   const systemHealth = 98.5;
 
   const userRoleData = [
-    { name: 'Konsultan Tani', value: 25, color: '#22c55e' },
+    { name: 'Gapoktan', value: 25, color: '#22c55e' },
     { name: 'Penyuluh', value: 12, color: '#eab308' },
     { name: 'Admin', value: 8, color: '#f97316' }
   ];
